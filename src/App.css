@@ -1,0 +1,538 @@
+* {
+  box-sizing: border-box;
+  width: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 1.5rem;
+  min-height: 100vh;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+header h1 {
+  margin: 0;
+  font-size: clamp(1.8rem, 5vw, 2.5rem);
+  color: #a855f7;
+}
+
+.subtitle {
+  color: #888;
+  margin: 0.5rem 0 0 0;
+  font-size: clamp(0.9rem, 2.5vw, 1rem);
+}
+
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 0.125rem solid #e0e0e0;
+}
+
+.tab {
+  flex: 1;
+  padding: 1rem;
+  background: none;
+  border: none;
+  border-bottom: 0.1875rem solid transparent;
+  cursor: pointer;
+  font-size: clamp(0.9rem, 2.5vw, 1rem);
+  color: #666;
+  transition: all 0.3s;
+  -webkit-touch-callout: none;
+  user-select: none;
+  min-height: 3rem;
+}
+
+.tab:active {
+  color: #333;
+  background: rgba(168, 85, 247, 0.1);
+}
+
+.tab.active {
+  color: #a855f7;
+  border-bottom-color: #a855f7;
+  font-weight: 600;
+}
+
+main {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+/* Add Card Styles */
+.add-card {
+  background: #f9f9f9;
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.1);
+}
+
+.add-card h2 {
+  margin-top: 0;
+  color: #333;
+  font-size: clamp(1.3rem, 4vw, 1.5rem);
+  text-align: center;
+}
+
+.add-card form {
+  display: flex;
+  flex-direction: column;
+  max-width: 37.5rem;
+  margin: 0 auto;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+  text-align: left;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #555;
+  font-size: clamp(0.95rem, 2.5vw, 1rem);
+}
+
+.form-group textarea {
+  width: 100%;
+  padding: 1rem;
+  border: 0.125rem solid #e0e0e0;
+  border-radius: 0.5rem;
+  font-family: inherit;
+  font-size: clamp(0.95rem, 2.5vw, 1rem);
+  resize: vertical;
+  transition: border-color 0.3s, box-shadow 0.3s;
+  min-height: 5rem;
+  line-height: 1.5;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.form-group textarea:focus {
+  outline: none;
+  border-color: #a855f7;
+  box-shadow: 0 0 0 0.1875rem rgba(168, 85, 247, 0.1);
+}
+
+.form-group textarea::placeholder {
+  color: #999;
+  opacity: 1;
+}
+
+/* Flashcard Viewer Styles */
+.flashcard-viewer {
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+}
+
+.progress {
+  margin-bottom: 1rem;
+  color: #888;
+  font-weight: 600;
+  font-size: clamp(0.9rem, 2.5vw, 1rem);
+}
+
+.flashcard {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: white;
+  border: 0.125rem solid #e0e0e0;
+  border-radius: 1rem;
+  padding: 2rem 1.5rem;
+  min-height: 17.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.1);
+  margin-bottom: 1.5rem;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.flashcard:active {
+  box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.15);
+  transform: scale(0.98);
+}
+
+.flashcard-content h3 {
+  color: #a855f7;
+  margin-top: 0;
+  margin-bottom: 1rem;
+  font-size: clamp(1rem, 3vw, 1.2rem);
+}
+
+.question {
+  font-size: clamp(1.1rem, 4vw, 1.3rem);
+  font-weight: 600;
+  color: #333;
+  margin: 1rem 0;
+  line-height: 1.5;
+}
+
+.answer-section {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 0.125rem solid #e0e0e0;
+}
+
+.answer {
+  font-size: clamp(1rem, 3vw, 1.1rem);
+  color: #555;
+  line-height: 1.6;
+}
+
+.hint {
+  color: #999;
+  font-style: italic;
+  margin-top: 2rem;
+  font-size: clamp(0.9rem, 2.5vw, 1rem);
+}
+
+/* Feedback Buttons */
+.feedback-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+  max-width: 37.5rem;
+  margin: 0 auto;
+}
+
+.feedback-buttons .btn {
+  flex: 1 1 8.75rem;
+}
+
+.btn {
+  padding: 1.2rem 1rem;
+  border: none;
+  border-radius: 0.75rem;
+  font-size: clamp(0.95rem, 2.5vw, 1rem);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: white;
+  min-height: 3.75rem;
+  user-select: none;
+  -webkit-touch-callout: none;
+  box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.15);
+}
+
+.btn:active {
+  transform: scale(0.95);
+  box-shadow: 0 0.0625rem 0.25rem rgba(0, 0, 0, 0.2);
+}
+
+.btn-primary {
+  background: #a855f7;
+  width: 100%;
+  font-size: clamp(1rem, 2.5vw, 1.1rem);
+}
+
+.btn-primary:active {
+  background: #9333ea;
+}
+
+.btn-again {
+  background: #a855f7;
+}
+
+.btn-again:active {
+  background: #9333ea;
+}
+
+.btn-hard {
+  background: #c084fc;
+}
+
+.btn-hard:active {
+  background: #a855f7;
+}
+
+.btn-good {
+  background: #d8b4fe;
+}
+
+.btn-good:active {
+  background: #c084fc;
+}
+
+.btn-easy {
+  background: #f3e8ff;
+  color: #6b21a8;
+}
+
+.btn-easy:active {
+  background: #e9d5ff;
+}
+
+.btn-delete {
+  background: #7c3aed;
+}
+
+.btn-delete:active {
+  background: #6d28d9;
+}
+
+.btn-subtext {
+  display: block;
+  font-size: clamp(0.7rem, 2vw, 0.75rem);
+  font-weight: 400;
+  opacity: 0.9;
+  margin-top: 0.25rem;
+}
+
+.no-cards {
+  background: #f9f9f9;
+  padding: 2rem 1.5rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.1);
+}
+
+.no-cards h2 {
+  color: #a855f7;
+  margin-top: 0;
+  font-size: clamp(1.3rem, 4vw, 1.5rem);
+}
+
+.no-cards p {
+  color: #666;
+  font-size: clamp(1rem, 3vw, 1.1rem);
+  line-height: 1.6;
+}
+
+/* Responsive Design */
+@media (min-width: 769px) {
+  .feedback-buttons .btn {
+    flex: 1 1 calc(25% - 0.75rem);
+  }
+}
+
+@media (max-width: 768px) {
+  .app {
+    padding: 1rem;
+  }
+
+  .flashcard {
+    padding: 1.5rem 1rem;
+    min-height: 15rem;
+  }
+
+  .add-card {
+    padding: 1.25rem;
+  }
+
+  .add-card form {
+    max-width: 100%;
+  }
+
+  .form-group textarea {
+    padding: 0.875rem;
+    min-height: 4.375rem;
+  }
+
+  .feedback-buttons .btn {
+    flex: 1 1 calc(50% - 0.75rem);
+  }
+
+  .feedback-buttons {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .app {
+    padding: 0.75rem;
+  }
+
+  header {
+    margin-bottom: 1rem;
+  }
+
+  .tabs {
+    margin-bottom: 1rem;
+  }
+
+  .add-card {
+    padding: 1rem;
+  }
+
+  .add-card h2 {
+    margin-bottom: 1rem;
+  }
+
+  .form-group {
+    margin-bottom: 1.25rem;
+  }
+
+  .form-group label {
+    margin-bottom: 0.4rem;
+  }
+
+  .form-group textarea {
+    padding: 0.75rem;
+    min-height: 3.75rem;
+    font-size: 1rem;
+  }
+
+  .flashcard {
+    padding: 1.5rem 1rem;
+    min-height: 13.75rem;
+  }
+
+  .feedback-buttons {
+    gap: 0.6rem;
+    max-width: 100%;
+  }
+
+  .feedback-buttons .btn {
+    flex: 1 1 calc(50% - 0.6rem);
+  }
+
+  .btn {
+    padding: 1rem 0.75rem;
+    min-height: 3.5rem;
+  }
+
+  .btn-subtext {
+    font-size: 0.7rem;
+  }
+}
+
+/* Landscape mode adjustments for phones */
+@media (max-height: 500px) and (orientation: landscape) {
+  .add-card {
+    padding: 1rem;
+  }
+
+  .form-group {
+    margin-bottom: 1rem;
+  }
+
+  .form-group textarea {
+    min-height: 3.125rem;
+    padding: 0.625rem;
+  }
+
+  .flashcard {
+    min-height: 10rem;
+    padding: 1rem;
+  }
+
+  .btn {
+    min-height: 3rem;
+    padding: 0.75rem 0.5rem;
+  }
+}
+
+/* Update Card Styles */
+.update-card {
+  background: #f9f9f9;
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.1);
+}
+
+.update-card h2 {
+  margin-top: 0;
+  color: #333;
+  font-size: clamp(1.3rem, 4vw, 1.5rem);
+  text-align: center;
+}
+
+.update-card h3 {
+  color: #555;
+  font-size: clamp(1.1rem, 3vw, 1.2rem);
+  margin-bottom: 1rem;
+}
+
+.update-card form {
+  display: flex;
+  flex-direction: column;
+  max-width: 37.5rem;
+  margin: 2rem auto 0;
+}
+
+.card-selector {
+  margin-bottom: 2rem;
+}
+
+.card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 25rem;
+  overflow-y: auto;
+  padding: 0.5rem;
+}
+
+.no-cards-message {
+  text-align: center;
+  color: #888;
+  padding: 2rem;
+  font-style: italic;
+}
+
+.card-item {
+  background: white;
+  border: 0.125rem solid #e0e0e0;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.card-item:hover {
+  border-color: #a855f7;
+  box-shadow: 0 0.125rem 0.5rem rgba(168, 85, 247, 0.1);
+}
+
+.card-item.selected {
+  border-color: #a855f7;
+  background: rgba(168, 85, 247, 0.05);
+}
+
+.card-item-question {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 0.5rem;
+  font-size: clamp(0.95rem, 2.5vw, 1rem);
+}
+
+.card-item-preview {
+  color: #666;
+  font-size: clamp(0.85rem, 2vw, 0.9rem);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.button-group {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.button-group .btn {
+  flex: 1;
+}
+
+button{
+  border-radius: 0;
+}
