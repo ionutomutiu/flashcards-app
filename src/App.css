@@ -665,6 +665,77 @@ button{
   border-color: #a855f7;
 }
 
+/* Folder Manager Styles */
+.folder-manager {
+  background: #f9f9f9;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.folder-manager-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.folder-manager-header h3 {
+  margin: 0;
+  color: #555;
+  font-size: 1rem;
+}
+
+.folder-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.folder-item {
+  background: white;
+  border: 0.125rem solid #e0e0e0;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+}
+
+.folder-display-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.folder-name {
+  font-weight: 500;
+  color: #333;
+  flex: 1;
+}
+
+.folder-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.folder-edit-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.folder-edit-row input {
+  flex: 1;
+  padding: 0.5rem;
+  border: 0.125rem solid #e0e0e0;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+}
+
+.folder-edit-row input:focus {
+  outline: none;
+  border-color: #a855f7;
+}
+
 @media (max-width: 480px) {
   .folder-filter {
     flex-direction: column;
@@ -678,5 +749,27 @@ button{
 
   .new-folder-input {
     flex-direction: column;
+  }
+
+  .folder-display-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .folder-actions {
+    width: 100%;
+  }
+
+  .folder-actions .btn {
+    flex: 1;
+  }
+
+  .folder-edit-row {
+    flex-direction: column;
+  }
+
+  .folder-edit-row input {
+    width: 100%;
   }
 }

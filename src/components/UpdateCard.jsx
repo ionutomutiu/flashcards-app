@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getFlashcards, updateFlashcardContent, deleteFlashcard, getFolders } from '../utils/flashcardUtils';
+import { getFlashcards, updateFlashcardContent, deleteFlashcard, getFolders, saveFolders, deleteFolder } from '../utils/flashcardUtils';
 
 function UpdateCard({ onCardUpdated, selectedFolderId, onFolderChange }) {
   const [flashcards, setFlashcards] = useState([]);
@@ -7,15 +7,22 @@ function UpdateCard({ onCardUpdated, selectedFolderId, onFolderChange }) {
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState('');
   const [folders, setFolders] = useState([]);
+  const [editingFolder, setEditingFolder] = useState(null);
+  const [editFolderName, setEditFolderName] = useState('');
+  const [showFolderManager, setShowFolderManager] = useState(false);
 
   useEffect(() => {
-    setFolders(getFolders());
+    loadFolders();
     loadFlashcards();
   }, []);
 
   useEffect(() => {
     loadFlashcards();
   }, [selectedFolderId]);
+
+  const loadFolders = () => {
+    setFolders(getFolders());
+  };
 
   const loadFlashcards = () => {
     const allCards = getFlashcards();
@@ -26,6 +33,43 @@ function UpdateCard({ onCardUpdated, selectedFolderId, onFolderChange }) {
     setSelectedCard(null);
     setQuestion('');
     setAnswer('');
+  };
+
+  const handleEditFolder = (folder) => {
+    setEditingFolder(folder);
+    setEditFolderName(folder.name);
+  };
+
+  const handleSaveFolder = () => {
+    if (!editingFolder || !editFolderName.trim()) return;
+
+    const updatedFolders = folders.map(f =>
+      f.id === editingFolder.id ? { ...f, name: editFolderName.trim() } : f
+    );
+    saveFolders(updatedFolders);
+    loadFolders();
+    setEditingFolder(null);
+    setEditFolderName('');
+    if (onCardUpdated) onCardUpdated();
+  };
+
+  const handleDeleteFolder = (folderId) => {
+    const folder = folders.find(f => f.id === folderId);
+    const cardsInFolder = getFlashcards().filter(c => c.folderId === folderId).length;
+
+    const message = cardsInFolder > 0
+      ? `Are you sure you want to delete "${folder.name}"? ${cardsInFolder} card(s) will be moved to "No folder".`
+      : `Are you sure you want to delete "${folder.name}"?`;
+
+    if (window.confirm(message)) {
+      deleteFolder(folderId);
+      loadFolders();
+      loadFlashcards();
+      if (selectedFolderId === folderId) {
+        onFolderChange(null);
+      }
+      if (onCardUpdated) onCardUpdated();
+    }
   };
 
   const handleSelectCard = (card) => {
@@ -79,11 +123,83 @@ function UpdateCard({ onCardUpdated, selectedFolderId, onFolderChange }) {
     </div>
   );
 
+  const folderManager = (
+    <div className="folder-manager">
+      <div className="folder-manager-header">
+        <h3>Manage Subjects</h3>
+        <button
+          type="button"
+          className="btn btn-small btn-secondary"
+          onClick={() => setShowFolderManager(!showFolderManager)}
+        >
+          {showFolderManager ? 'Hide' : 'Show'}
+        </button>
+      </div>
+      {showFolderManager && (
+        <div className="folder-list">
+          {folders.length === 0 ? (
+            <p className="no-cards-message">No subjects yet. Create one when adding a card.</p>
+          ) : (
+            folders.map(folder => (
+              <div key={folder.id} className="folder-item">
+                {editingFolder?.id === folder.id ? (
+                  <div className="folder-edit-row">
+                    <input
+                      type="text"
+                      value={editFolderName}
+                      onChange={(e) => setEditFolderName(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleSaveFolder()}
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-small btn-primary"
+                      onClick={handleSaveFolder}
+                    >
+                      Save
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-small btn-secondary"
+                      onClick={() => setEditingFolder(null)}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <div className="folder-display-row">
+                    <span className="folder-name">{folder.name}</span>
+                    <div className="folder-actions">
+                      <button
+                        type="button"
+                        className="btn btn-small btn-secondary"
+                        onClick={() => handleEditFolder(folder)}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-small btn-delete"
+                        onClick={() => handleDeleteFolder(folder.id)}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className="update-card">
       <h2>Edit Flashcards</h2>
 
       {folderSelector}
+      {folderManager}
 
       <div className="card-selector">
         <h3>Select a card to edit:</h3>
