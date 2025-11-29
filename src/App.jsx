@@ -7,14 +7,19 @@ import './App.css';
 function App() {
   const [activeTab, setActiveTab] = useState('review');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [selectedFolderId, setSelectedFolderId] = useState(null);
 
   const handleCardAdded = () => {
     setRefreshTrigger(prev => prev + 1);
-    setActiveTab('review');
+    // setActiveTab('review');
   };
 
   const handleCardUpdated = () => {
     setRefreshTrigger(prev => prev + 1);
+  };
+
+  const handleFolderChange = (folderId) => {
+    setSelectedFolderId(folderId);
   };
 
   return (
@@ -47,11 +52,19 @@ function App() {
 
       <main>
         {activeTab === 'review' ? (
-          <FlashcardViewer refreshTrigger={refreshTrigger} />
+          <FlashcardViewer
+            refreshTrigger={refreshTrigger}
+            selectedFolderId={selectedFolderId}
+            onFolderChange={handleFolderChange}
+          />
         ) : activeTab === 'add' ? (
-          <AddCard onCardAdded={handleCardAdded} />
+          <AddCard onCardAdded={handleCardAdded} selectedFolderId={selectedFolderId} />
         ) : (
-          <UpdateCard onCardUpdated={handleCardUpdated} />
+          <UpdateCard
+            onCardUpdated={handleCardUpdated}
+            selectedFolderId={selectedFolderId}
+            onFolderChange={handleFolderChange}
+          />
         )}
       </main>
     </div>

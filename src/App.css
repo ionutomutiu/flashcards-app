@@ -1,7 +1,15 @@
 * {
   box-sizing: border-box;
-  width: 100%;
   -webkit-tap-highlight-color: transparent;
+}
+
+*:not(select):not(option) {
+  width: 100%;
+}
+
+select {
+  all: revert;
+  box-sizing: border-box;
 }
 
 body {
@@ -535,4 +543,140 @@ main {
 
 button{
   border-radius: 0;
+}
+
+/* Folder Styles */
+.folder-filter {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: #f9f9f9;
+  border-radius: 0.5rem;
+}
+
+.folder-filter label {
+  font-weight: 600;
+  color: #555;
+  white-space: nowrap;
+}
+
+.folder-filter select {
+  flex: 1;
+  padding: 0.75rem;
+  border: 0.125rem solid #e0e0e0;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  background: white;
+  color: #333;
+  cursor: pointer;
+  -webkit-appearance: menulist;
+  appearance: menulist;
+  width: auto;
+}
+
+.folder-filter select option {
+  width: auto;
+  color: #333;
+  background: white;
+}
+
+.folder-filter select:focus {
+  outline: none;
+  border-color: #a855f7;
+}
+
+.folder-badge {
+  display: inline-block;
+  margin-left: 0.75rem;
+  padding: 0.25rem 0.75rem;
+  background: #a855f7;
+  color: white;
+  border-radius: 1rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.folder-select-wrapper {
+  display: flex;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+
+.folder-select-wrapper select {
+  flex: 1;
+  padding: 0.75rem;
+  border: 0.125rem solid #e0e0e0;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  background: white;
+  color: #333;
+  cursor: pointer;
+  -webkit-appearance: menulist;
+  appearance: menulist;
+  min-width: 0;
+  width: auto;
+}
+
+.folder-select-wrapper select option {
+  width: auto;
+  color: #333;
+  background: white;
+}
+
+.folder-select-wrapper select:focus {
+  outline: none;
+  border-color: #a855f7;
+}
+
+.btn-small {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  min-height: auto;
+  white-space: nowrap;
+}
+
+.btn-secondary {
+  background: #e0e0e0;
+  color: #555;
+}
+
+.btn-secondary:active {
+  background: #d0d0d0;
+}
+
+.new-folder-input {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.new-folder-input input {
+  flex: 1;
+  padding: 0.75rem;
+  border: 0.125rem solid #e0e0e0;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+}
+
+.new-folder-input input:focus {
+  outline: none;
+  border-color: #a855f7;
+}
+
+@media (max-width: 480px) {
+  .folder-filter {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .folder-select-wrapper {
+    flex-direction: column;
+  }
+
+  .new-folder-input {
+    flex-direction: column;
+  }
 }

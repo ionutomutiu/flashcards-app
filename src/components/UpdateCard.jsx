@@ -1,19 +1,28 @@
 import { useState, useEffect } from 'react';
-import { getFlashcards, updateFlashcardContent, deleteFlashcard } from '../utils/flashcardUtils';
+import { getFlashcards, updateFlashcardContent, deleteFlashcard, getFolders } from '../utils/flashcardUtils';
 
-function UpdateCard({ onCardUpdated }) {
+function UpdateCard({ onCardUpdated, selectedFolderId, onFolderChange }) {
   const [flashcards, setFlashcards] = useState([]);
   const [selectedCard, setSelectedCard] = useState(null);
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState('');
+  const [folders, setFolders] = useState([]);
 
   useEffect(() => {
+    setFolders(getFolders());
     loadFlashcards();
   }, []);
 
+  useEffect(() => {
+    loadFlashcards();
+  }, [selectedFolderId]);
+
   const loadFlashcards = () => {
-    const cards = getFlashcards();
-    setFlashcards(cards);
+    const allCards = getFlashcards();
+    const filteredCards = selectedFolderId
+      ? allCards.filter(card => card.folderId === selectedFolderId)
+      : allCards;
+    setFlashcards(filteredCards);
     setSelectedCard(null);
     setQuestion('');
     setAnswer('');
@@ -54,9 +63,27 @@ function UpdateCard({ onCardUpdated }) {
     }
   };
 
+  const folderSelector = (
+    <div className="folder-filter">
+      <label htmlFor="edit-folder-filter">Subject:</label>
+      <select
+        id="edit-folder-filter"
+        value={selectedFolderId ? String(selectedFolderId) : ''}
+        onChange={(e) => onFolderChange(e.target.value ? Number(e.target.value) : null)}
+      >
+        <option value="">All folders</option>
+        {folders.map(folder => (
+          <option key={folder.id} value={String(folder.id)}>{folder.name}</option>
+        ))}
+      </select>
+    </div>
+  );
+
   return (
     <div className="update-card">
       <h2>Edit Flashcards</h2>
+
+      {folderSelector}
 
       <div className="card-selector">
         <h3>Select a card to edit:</h3>
