@@ -1,6 +1,20 @@
 import { useState, useEffect } from 'react';
 import { addFlashcard, getFolders, addFolder } from '../utils/flashcardUtils';
 
+// Sanitize text by removing special characters added by iOS Safari
+const sanitizeText = (text) => {
+  return text
+    .replace(/\u00A0/g, ' ')      // Non-breaking space
+    .replace(/\u200B/g, '')       // Zero-width space
+    .replace(/\u200C/g, '')       // Zero-width non-joiner
+    .replace(/\u200D/g, '')       // Zero-width joiner
+    .replace(/\uFEFF/g, '')       // Byte order mark
+    .replace(/\u2028/g, '\n')     // Line separator
+    .replace(/\u2029/g, '\n')     // Paragraph separator
+    .replace(/[\u2018\u2019]/g, "'")  // Smart single quotes
+    .replace(/[\u201C\u201D]/g, '"'); // Smart double quotes
+};
+
 function AddCard({ onCardAdded, selectedFolderId }) {
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState('');
@@ -8,6 +22,18 @@ function AddCard({ onCardAdded, selectedFolderId }) {
   const [folders, setFolders] = useState([]);
   const [newFolderName, setNewFolderName] = useState('');
   const [showNewFolderInput, setShowNewFolderInput] = useState(false);
+
+  const handlePaste = (e, setter) => {
+    e.preventDefault();
+    const pastedText = e.clipboardData.getData('text/plain');
+    const sanitized = sanitizeText(pastedText);
+    const textarea = e.target;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const currentValue = textarea.value;
+    const newValue = currentValue.substring(0, start) + sanitized + currentValue.substring(end);
+    setter(newValue);
+  };
 
   useEffect(() => {
     setFolders(getFolders());
@@ -91,6 +117,7 @@ function AddCard({ onCardAdded, selectedFolderId }) {
             id="question"
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
+            onPaste={(e) => handlePaste(e, setQuestion)}
             placeholder="Enter your question..."
             rows="3"
             required
@@ -102,6 +129,7 @@ function AddCard({ onCardAdded, selectedFolderId }) {
             id="answer"
             value={answer}
             onChange={(e) => setAnswer(e.target.value)}
+            onPaste={(e) => handlePaste(e, setAnswer)}
             placeholder="Enter the answer..."
             rows="3"
             required
