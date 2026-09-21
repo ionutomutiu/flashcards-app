@@ -531,6 +531,30 @@ main {
   white-space: nowrap;
 }
 
+.review-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+
+.new-per-day {
+  width: 4.5rem;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: clamp(0.85rem, 2vw, 0.95rem);
+}
+
+.relearn-badge {
+  margin-left: 0.6rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(239, 68, 68, 0.12);
+  color: #b91c1c;
+  font-size: 0.8em;
+}
+
 .card-item-schedule {
   margin-top: 0.4rem;
   color: #8b8b8b;

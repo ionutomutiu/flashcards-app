@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
+import { applyRating, queueCounts } from '../utils/sessionQueue';
 import {
   getDueFlashcards,
   updateFlashcard,
   getFolders,
   getReviewStats,
+  getSettings,
+  saveSettings,
   scheduleCard,
   formatInterval,
 } from '../utils/flashcardUtils';
@@ -16,62 +19,86 @@ const RATINGS = [
 ];
 
 function FlashcardViewer({ refreshTrigger, selectedFolderId, onFolderChange }) {
-  const [dueCards, setDueCards] = useState([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [queue, setQueue] = useState([]);
+  const [index, setIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
   const [folders, setFolders] = useState([]);
   const [stats, setStats] = useState(null);
+  const [newPerDay, setNewPerDay] = useState(getSettings().newPerDay);
 
   useEffect(() => {
     setFolders(getFolders());
   }, [refreshTrigger]);
 
   useEffect(() => {
-    loadDueCards();
+    loadQueue();
   }, [refreshTrigger, selectedFolderId]);
 
-  const loadDueCards = () => {
+  const loadQueue = () => {
     const folderId = selectedFolderId || null;
-    setDueCards(getDueFlashcards(folderId));
+    setQueue(getDueFlashcards(folderId));
     setStats(getReviewStats(folderId));
-    setCurrentIndex(0);
+    setIndex(0);
     setShowAnswer(false);
   };
 
   const handleFeedback = (rating) => {
-    if (dueCards.length === 0) return;
+    if (queue.length === 0) return;
 
-    updateFlashcard(dueCards[currentIndex].id, rating);
+    const card = queue[index];
+    const updated = updateFlashcard(card.id, rating) || card;
+    const next = applyRating(queue, index, rating, updated);
 
-    if (currentIndex < dueCards.length - 1) {
-      setCurrentIndex(currentIndex + 1);
+    if (index + 1 < next.length) {
+      setQueue(next);
+      setIndex(index + 1);
       setShowAnswer(false);
     } else {
-      // Session finished — reload so the session-ends screen reflects reality.
-      loadDueCards();
+      loadQueue();
     }
   };
 
-  const folderSelector = (
-    <div className="folder-filter">
-      <label htmlFor="folder-filter">Subject:</label>
-      <select
-        id="folder-filter"
-        value={selectedFolderId ? String(selectedFolderId) : ''}
-        onChange={(e) => onFolderChange(e.target.value ? Number(e.target.value) : null)}
-      >
-        <option value="">All folders</option>
-        {folders.map(folder => (
-          <option key={folder.id} value={String(folder.id)}>{folder.name}</option>
-        ))}
-      </select>
+  const handleNewPerDay = (value) => {
+    const n = Math.max(0, Number(value) || 0);
+    setNewPerDay(n);
+    saveSettings({ newPerDay: n });
+    loadQueue();
+  };
+
+  const controls = (
+    <div className="review-controls">
+      <div className="folder-filter">
+        <label htmlFor="folder-filter">Subject:</label>
+        <select
+          id="folder-filter"
+          value={selectedFolderId ? String(selectedFolderId) : ''}
+          onChange={(e) => onFolderChange(e.target.value ? Number(e.target.value) : null)}
+        >
+          <option value="">All folders</option>
+          {folders.map(folder => (
+            <option key={folder.id} value={String(folder.id)}>{folder.name}</option>
+          ))}
+        </select>
+      </div>
+      <div className="folder-filter">
+        <label htmlFor="new-per-day">New/day:</label>
+        <input
+          id="new-per-day"
+          type="number"
+          min="0"
+          className="new-per-day"
+          value={newPerDay}
+          onChange={(e) => handleNewPerDay(e.target.value)}
+          title="New cards introduced per subject each day. 0 means no limit."
+        />
+      </div>
     </div>
   );
 
-  if (dueCards.length === 0) {
+  if (queue.length === 0) {
     return (
       <div className="flashcard-viewer">
-        {folderSelector}
+        {controls}
         <div className="no-cards">
           {stats && stats.total === 0 ? (
             <>
@@ -91,6 +118,12 @@ function FlashcardViewer({ refreshTrigger, selectedFolderId, onFolderChange }) {
                     {stats.scheduled} card{stats.scheduled === 1 ? '' : 's'} scheduled
                     {stats.nextReviewDate && `, next one on ${stats.nextReviewDate}`}
                   </p>
+                  {stats.heldBack > 0 && (
+                    <p className="hint">
+                      {stats.heldBack} new card{stats.heldBack === 1 ? '' : 's'} held back by
+                      the daily limit — they start tomorrow.
+                    </p>
+                  )}
                   {stats.completed > 0 && (
                     <p className="hint">
                       {stats.completed} card{stats.completed === 1 ? '' : 's'} marked done
@@ -107,13 +140,17 @@ function FlashcardViewer({ refreshTrigger, selectedFolderId, onFolderChange }) {
     );
   }
 
-  const currentCard = dueCards[currentIndex];
+  const currentCard = queue[index];
+  const counts = queueCounts(queue, index);
 
   return (
     <div className="flashcard-viewer">
-      {folderSelector}
+      {controls}
       <div className="progress">
-        Card {currentIndex + 1} of {dueCards.length}
+        {counts.left} left
+        {counts.relearning > 0 && (
+          <span className="relearn-badge">{counts.relearning} to redo</span>
+        )}
       </div>
 
       <div className="flashcard" onClick={() => setShowAnswer(!showAnswer)}>
@@ -144,7 +181,9 @@ function FlashcardViewer({ refreshTrigger, selectedFolderId, onFolderChange }) {
             >
               {label}<br />
               <span className="btn-subtext">
-                {formatInterval(scheduleCard(currentCard, key).interval)}
+                {key === 'again'
+                  ? 'this session'
+                  : formatInterval(scheduleCard(currentCard, key).interval)}
               </span>
             </button>
           ))}
