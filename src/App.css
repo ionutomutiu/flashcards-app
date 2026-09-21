@@ -531,8 +531,26 @@ main {
   white-space: nowrap;
 }
 
+.card-item-schedule {
+  margin-top: 0.4rem;
+  color: #8b8b8b;
+  font-size: clamp(0.72rem, 1.8vw, 0.78rem);
+  font-variant-numeric: tabular-nums;
+}
+
+.review-stats {
+  margin-top: 0.75rem;
+  line-height: 1.6;
+}
+
+.review-stats .hint {
+  margin-top: 0.75rem;
+  font-size: clamp(0.8rem, 2vw, 0.88rem);
+}
+
 .button-group {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.75rem;
   margin-top: 1rem;
 }

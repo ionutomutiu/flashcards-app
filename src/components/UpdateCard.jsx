@@ -1,5 +1,14 @@
 import { useState, useEffect } from 'react';
-import { getFlashcards, updateFlashcardContent, deleteFlashcard, getFolders, saveFolders, deleteFolder } from '../utils/flashcardUtils';
+import {
+  getFlashcards,
+  updateFlashcardContent,
+  deleteFlashcard,
+  getFolders,
+  saveFolders,
+  deleteFolder,
+  resetFlashcard,
+  formatInterval,
+} from '../utils/flashcardUtils';
 
 // Sanitize text by removing special characters added by iOS Safari
 const sanitizeText = (text) => {
@@ -117,6 +126,19 @@ function UpdateCard({ onCardUpdated, selectedFolderId, onFolderChange }) {
 
     if (onCardUpdated) {
       onCardUpdated();
+    }
+  };
+
+  const handleReset = () => {
+    if (!selectedCard) return;
+
+    if (window.confirm('Reset this card? It will be due today and start from a fresh interval.')) {
+      resetFlashcard(selectedCard.id);
+      loadFlashcards();
+
+      if (onCardUpdated) {
+        onCardUpdated();
+      }
     }
   };
 
@@ -240,7 +262,16 @@ function UpdateCard({ onCardUpdated, selectedFolderId, onFolderChange }) {
                 onClick={() => handleSelectCard(card)}
               >
                 <div className="card-item-question">{card.question}</div>
-                <div className="card-item-preview">{card.answer.substring(0, 50)}...</div>
+                <div className="card-item-preview">
+                  {card.answer.length > 50 ? `${card.answer.substring(0, 50)}...` : card.answer}
+                </div>
+                <div className="card-item-schedule">
+                  {card.completed
+                    ? 'Done (old scheme)'
+                    : card.repetitions > 0
+                      ? `Due ${card.nextReviewDate} · ${formatInterval(card.interval)} · ease ${card.easeFactor}`
+                      : 'New card'}
+                </div>
               </div>
             ))
           )}
@@ -276,6 +307,13 @@ function UpdateCard({ onCardUpdated, selectedFolderId, onFolderChange }) {
           <div className="button-group">
             <button type="submit" className="btn btn-primary">
               Update Card
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={handleReset}
+            >
+              Reset Card
             </button>
             <button
               type="button"

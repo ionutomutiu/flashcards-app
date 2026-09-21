@@ -1,13 +1,45 @@
+import { seedFlashcards } from '../data/seedFolders.js';
+
 const STORAGE_KEY = 'flashcards';
 const FOLDERS_KEY = 'flashcard_folders';
 
+// SM-2 tuning constants
+const DEFAULT_EASE = 2.5;
+const MIN_EASE = 1.3;
+const EASE_DELTA = {
+  again: -0.20,
+  hard: -0.15,
+  good: 0,
+  easy: 0.15,
+};
+const HARD_MULTIPLIER = 1.2;
+const EASY_BONUS = 1.3;
+
 export const getFlashcards = () => {
   const stored = localStorage.getItem(STORAGE_KEY);
-  return stored ? JSON.parse(stored) : [];
+  const cards = stored ? JSON.parse(stored) : [];
+  return cards.map(normalizeCard);
 };
 
 export const saveFlashcards = (flashcards) => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(flashcards));
+};
+
+// Cards created before SM-2 lack the scheduling fields; fill them in on read.
+const normalizeCard = (card) => ({
+  easeFactor: DEFAULT_EASE,
+  interval: 0,
+  repetitions: 0,
+  reviews: [],
+  ...card,
+});
+
+const today = () => new Date().toISOString().split('T')[0];
+
+const addDays = (days) => {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return date.toISOString().split('T')[0];
 };
 
 // Folder management functions
@@ -56,7 +88,11 @@ export const addFlashcard = (question, answer, folderId = null) => {
     question,
     answer,
     folderId,
-    nextReviewDate: new Date().toISOString().split('T')[0], // Today
+    easeFactor: DEFAULT_EASE,
+    interval: 0,
+    repetitions: 0,
+    reviews: [],
+    nextReviewDate: today(),
     createdAt: new Date().toISOString(),
   };
   flashcards.push(newCard);
@@ -64,72 +100,135 @@ export const addFlashcard = (question, answer, folderId = null) => {
   return newCard;
 };
 
-export const updateFlashcard = (id, feedback) => {
+/**
+ * SM-2 scheduling. Returns the card's next state without persisting it, so the
+ * UI can preview what each rating would do before the user commits.
+ */
+export const scheduleCard = (card, rating) => {
+  const normalized = normalizeCard(card);
+  let ease = normalized.easeFactor;
+  let repetitions = normalized.repetitions;
+  let interval = normalized.interval;
+
+  ease = Math.max(MIN_EASE, ease + (EASE_DELTA[rating] ?? 0));
+
+  if (rating === 'again') {
+    // Lapse: back to the start of the learning steps.
+    repetitions = 0;
+    interval = 1;
+  } else {
+    repetitions += 1;
+    if (repetitions === 1) {
+      interval = rating === 'easy' ? 4 : 1;
+    } else if (repetitions === 2) {
+      interval = rating === 'easy' ? 8 : 6;
+    } else {
+      const multiplier = rating === 'hard'
+        ? HARD_MULTIPLIER
+        : rating === 'easy'
+          ? ease * EASY_BONUS
+          : ease;
+      interval = Math.round(interval * multiplier);
+    }
+  }
+
+  interval = Math.max(1, interval);
+
+  return {
+    easeFactor: Number(ease.toFixed(2)),
+    repetitions,
+    interval,
+    nextReviewDate: addDays(interval),
+  };
+};
+
+export const updateFlashcard = (id, rating) => {
   const flashcards = getFlashcards();
   const cardIndex = flashcards.findIndex(card => card.id === id);
 
   if (cardIndex === -1) return;
 
-  const today = new Date();
-  let nextReviewDate;
+  const card = flashcards[cardIndex];
+  const next = scheduleCard(card, rating);
 
-  switch (feedback) {
-    case 'again':
-      // Show again tomorrow
-      nextReviewDate = new Date(today);
-      nextReviewDate.setDate(today.getDate() + 1);
-      flashcards[cardIndex].nextReviewDate = nextReviewDate.toISOString().split('T')[0];
-      break;
-    case 'hard':
-      // Show after 2 days
-      nextReviewDate = new Date(today);
-      nextReviewDate.setDate(today.getDate() + 2);
-      flashcards[cardIndex].nextReviewDate = nextReviewDate.toISOString().split('T')[0];
-      break;
-    case 'good':
-      // Show after 4 days
-      nextReviewDate = new Date(today);
-      nextReviewDate.setDate(today.getDate() + 4);
-      flashcards[cardIndex].nextReviewDate = nextReviewDate.toISOString().split('T')[0];
-      break;
-    case 'easy':
-      // Mark as completed (set to null or far future date)
-      flashcards[cardIndex].nextReviewDate = null;
-      flashcards[cardIndex].completed = true;
-      break;
-    default:
-      break;
-  }
+  flashcards[cardIndex] = {
+    ...card,
+    ...next,
+    completed: false,
+    lastReviewedAt: new Date().toISOString(),
+    reviews: [
+      ...card.reviews,
+      {
+        date: today(),
+        rating,
+        interval: next.interval,
+        easeFactor: next.easeFactor,
+      },
+    ],
+  };
 
   saveFlashcards(flashcards);
+  return flashcards[cardIndex];
+};
+
+/** Puts a card (including one completed under the old scheme) back in rotation. */
+export const resetFlashcard = (id) => {
+  const flashcards = getFlashcards();
+  const cardIndex = flashcards.findIndex(card => card.id === id);
+
+  if (cardIndex === -1) return;
+
+  flashcards[cardIndex] = {
+    ...flashcards[cardIndex],
+    easeFactor: DEFAULT_EASE,
+    interval: 0,
+    repetitions: 0,
+    completed: false,
+    nextReviewDate: today(),
+  };
+
+  saveFlashcards(flashcards);
+  return flashcards[cardIndex];
+};
+
+const isDue = (card) => {
+  if (card.completed) return false;
+  if (!card.nextReviewDate) return true;
+  return card.nextReviewDate <= today();
 };
 
 export const getDueFlashcards = (folderId = null) => {
   const flashcards = getFlashcards();
-  const today = new Date().toISOString().split('T')[0];
 
-  // Filter by folder if specified
   const folderFilteredCards = folderId
     ? flashcards.filter(card => card.folderId === folderId)
     : flashcards;
 
-  const dueCards = folderFilteredCards.filter(card => {
-    // Skip completed cards
-    if (card.completed) return false;
+  // Oldest due date first, so the most overdue cards come back soonest.
+  return folderFilteredCards
+    .filter(isDue)
+    .sort((a, b) => (a.nextReviewDate || '').localeCompare(b.nextReviewDate || ''));
+};
 
-    // If no nextReviewDate, it's due
-    if (!card.nextReviewDate) return true;
+/** Counts for the "nothing due" screen: what is waiting and when. */
+export const getReviewStats = (folderId = null) => {
+  const flashcards = getFlashcards();
+  const cards = folderId
+    ? flashcards.filter(card => card.folderId === folderId)
+    : flashcards;
 
-    // Check if due date is today or before
-    return card.nextReviewDate <= today;
-  });
+  const scheduled = cards.filter(card => !card.completed && !isDue(card));
+  const nextDate = scheduled
+    .map(card => card.nextReviewDate)
+    .sort()[0] || null;
 
-  // If no cards are due, return all folder-filtered cards to keep practicing
-  if (dueCards.length === 0) {
-    return folderFilteredCards.filter(card => !card.completed);
-  }
-
-  return dueCards;
+  return {
+    total: cards.length,
+    due: cards.filter(isDue).length,
+    scheduled: scheduled.length,
+    completed: cards.filter(card => card.completed).length,
+    nextReviewDate: nextDate,
+  };
 };
 
 export const getFlashcardsByFolder = (folderId) => {
@@ -154,4 +253,17 @@ export const deleteFlashcard = (id) => {
   const flashcards = getFlashcards();
   const filtered = flashcards.filter(card => card.id !== id);
   saveFlashcards(filtered);
+};
+
+/** Loads the bundled decks on first run; safe to call on every start. */
+export const seedIfNeeded = () =>
+  seedFlashcards({ getFolders, saveFolders, getFlashcards, saveFlashcards });
+
+/** "1 day", "6 days", "1.4 mo", "2.1 yr" — Anki-style compact intervals. */
+export const formatInterval = (days) => {
+  if (days < 1) return '<1 day';
+  if (days === 1) return '1 day';
+  if (days < 30) return `${days} days`;
+  if (days < 365) return `${(days / 30).toFixed(1)} mo`;
+  return `${(days / 365).toFixed(1)} yr`;
 };

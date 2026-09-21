@@ -1,11 +1,26 @@
 import { useState, useEffect } from 'react';
-import { getDueFlashcards, updateFlashcard, getFolders } from '../utils/flashcardUtils';
+import {
+  getDueFlashcards,
+  updateFlashcard,
+  getFolders,
+  getReviewStats,
+  scheduleCard,
+  formatInterval,
+} from '../utils/flashcardUtils';
+
+const RATINGS = [
+  { key: 'again', label: 'Again', className: 'btn-again' },
+  { key: 'hard', label: 'Hard', className: 'btn-hard' },
+  { key: 'good', label: 'Good', className: 'btn-good' },
+  { key: 'easy', label: 'Easy', className: 'btn-easy' },
+];
 
 function FlashcardViewer({ refreshTrigger, selectedFolderId, onFolderChange }) {
   const [dueCards, setDueCards] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
   const [folders, setFolders] = useState([]);
+  const [stats, setStats] = useState(null);
 
   useEffect(() => {
     setFolders(getFolders());
@@ -16,24 +31,23 @@ function FlashcardViewer({ refreshTrigger, selectedFolderId, onFolderChange }) {
   }, [refreshTrigger, selectedFolderId]);
 
   const loadDueCards = () => {
-    const cards = getDueFlashcards(selectedFolderId || null);
-    setDueCards(cards);
+    const folderId = selectedFolderId || null;
+    setDueCards(getDueFlashcards(folderId));
+    setStats(getReviewStats(folderId));
     setCurrentIndex(0);
     setShowAnswer(false);
   };
 
-  const handleFeedback = (feedback) => {
+  const handleFeedback = (rating) => {
     if (dueCards.length === 0) return;
 
-    const currentCard = dueCards[currentIndex];
-    updateFlashcard(currentCard.id, feedback);
+    updateFlashcard(dueCards[currentIndex].id, rating);
 
-    // Move to next card or reload
     if (currentIndex < dueCards.length - 1) {
       setCurrentIndex(currentIndex + 1);
       setShowAnswer(false);
     } else {
-      // All cards reviewed
+      // Session finished — reload so the session-ends screen reflects reality.
       loadDueCards();
     }
   };
@@ -59,15 +73,41 @@ function FlashcardViewer({ refreshTrigger, selectedFolderId, onFolderChange }) {
       <div className="flashcard-viewer">
         {folderSelector}
         <div className="no-cards">
-          <h2>No cards due for review!</h2>
-          <p>{selectedFolderId ? 'No cards in this folder. Try selecting a different folder or add new cards.' : 'Add new cards or come back later when cards are due.'}</p>
+          {stats && stats.total === 0 ? (
+            <>
+              <h2>No cards yet</h2>
+              <p>
+                {selectedFolderId
+                  ? 'This subject is empty. Add some cards to get started.'
+                  : 'Add your first card to get started.'}
+              </p>
+            </>
+          ) : (
+            <>
+              <h2>All done for today!</h2>
+              {stats && (
+                <div className="review-stats">
+                  <p>
+                    {stats.scheduled} card{stats.scheduled === 1 ? '' : 's'} scheduled
+                    {stats.nextReviewDate && `, next one on ${stats.nextReviewDate}`}
+                  </p>
+                  {stats.completed > 0 && (
+                    <p className="hint">
+                      {stats.completed} card{stats.completed === 1 ? '' : 's'} marked done
+                      under the old scheme — reset them from the Edit Cards tab to bring
+                      them back.
+                    </p>
+                  )}
+                </div>
+              )}
+            </>
+          )}
         </div>
       </div>
     );
   }
 
   const currentCard = dueCards[currentIndex];
-  const currentFolder = folders.find(f => f.id === currentCard.folderId);
 
   return (
     <div className="flashcard-viewer">
@@ -96,34 +136,18 @@ function FlashcardViewer({ refreshTrigger, selectedFolderId, onFolderChange }) {
 
       {showAnswer && (
         <div className="feedback-buttons">
-          <button
-            className="btn btn-again"
-            onClick={() => handleFeedback('again')}
-          >
-            Again<br/>
-            <span className="btn-subtext">1 day</span>
-          </button>
-          <button
-            className="btn btn-hard"
-            onClick={() => handleFeedback('hard')}
-          >
-            Hard<br/>
-            <span className="btn-subtext">2 days</span>
-          </button>
-          <button
-            className="btn btn-good"
-            onClick={() => handleFeedback('good')}
-          >
-            Good<br/>
-            <span className="btn-subtext">4 days</span>
-          </button>
-          <button
-            className="btn btn-easy"
-            onClick={() => handleFeedback('easy')}
-          >
-            Easy<br/>
-            <span className="btn-subtext">Done</span>
-          </button>
+          {RATINGS.map(({ key, label, className }) => (
+            <button
+              key={key}
+              className={`btn ${className}`}
+              onClick={() => handleFeedback(key)}
+            >
+              {label}<br />
+              <span className="btn-subtext">
+                {formatInterval(scheduleCard(currentCard, key).interval)}
+              </span>
+            </button>
+          ))}
         </div>
       )}
     </div>
