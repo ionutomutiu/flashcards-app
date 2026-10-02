@@ -3,18 +3,21 @@ import seed from './seedCards.json';
 const SEED_KEY = 'flashcard_seed_version';
 
 /**
- * Loads the bundled decks (extracted from the printed fiches) on first run.
+ * Loads the bundled decks (extracted from Flashcards_INM.pdf) on first run.
  *
  * Idempotent: each card carries the `ref` it had on its sheet, so re-running
  * after a partial import — or after a later seed version adds cards — tops the
- * decks up instead of duplicating them. Cards you add or edit are never touched.
+ * decks up instead of duplicating them. Cards you add yourself are never touched.
  */
 export function seedFlashcards({ getFolders, saveFolders, getFlashcards, saveFlashcards }) {
   const done = Number(localStorage.getItem(SEED_KEY) || 0);
   if (done >= seed.version) return null;
 
   const folders = getFolders();
-  const cards = getFlashcards();
+  // Bundled cards no longer in the current seed (e.g. the old printed fiches)
+  // are retired; cards you created yourself have no seedRef and stay.
+  const current = new Set(seed.subjects.flatMap(s => s.cards.map(c => c.ref)));
+  const cards = getFlashcards().filter(c => !c.seedRef || current.has(c.seedRef));
   const existing = new Set(cards.map(c => `${c.folderId}::${c.seedRef}`));
   const today = new Date().toISOString().split('T')[0];
   const now = new Date().toISOString();
